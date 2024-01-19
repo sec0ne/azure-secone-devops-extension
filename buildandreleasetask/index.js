@@ -7,19 +7,19 @@ const FormData = require('form-data');
 function run() {
   try {
     
-    // const serviceConnectionId = tl.getInput('serviceConnection', true) || '';
+    const serviceConnectionId = tl.getInput('serviceConnection', true) || '';
    
-    // if (!serviceConnectionId) {
-    //     throw new Error('Service connection not found or authorization details missing.');
-    // }
+    if (!serviceConnectionId) {
+        throw new Error('Service connection not found or authorization details missing.');
+    }
 
-    // const serviceConnection = tl.getEndpointAuthorization(serviceConnectionId, false);
-    // if (!serviceConnection) {
-    //     throw new Error('Service connection not found or authorization details missing.');
-    // }
+    const serviceConnection = tl.getEndpointAuthorization(serviceConnectionId, false);
+    if (!serviceConnection) {
+        throw new Error('Service connection not found or authorization details missing.');
+    }
 
-    // const apiKey = serviceConnection.parameters['password'];
-    const apiKey = 'secone-b7acc51cc87c6b3afa6bc4e006faa73dbb317f145d8977627f69dc9e89db708f';
+    const apiKey = serviceConnection.parameters['password'];
+    //const apiKey = 'secone-b7acc51cc87c6b3afa6bc4e006faa73dbb317f145d8977627f69dc9e89db708f';
     const apiUrl = 'https://api.sec1.io/rest/foss'; // Replace with your actual API endpoint
     var filePath;
     if(checkFilePresence('pom.xml')) {
@@ -68,9 +68,11 @@ async function triggerSec1Scan(apiUrl, apiKey, filePath) {
         summary.scanFile = filePath;
         if (responseObject.errorMessage != undefined && responseObject.errorMessage != '') {
             printErrorResponse(options, responseObject.errorMessage);
+            tl.setResult(tl.TaskResult.Failed, responseObject.errorMessag);
         } else if(responseObject.status == "FAILED" ){
             options.file = summary.scanFile
             printErrorResponse(options, "Scan failed for report : " + responseObject.reportId);
+            tl.setResult(tl.TaskResult.Failed, responseObject.errorMessag);
         } else {
             summary.critical = responseObject.cveCountDetails.CRITICAL || 0;
             summary.high = responseObject.cveCountDetails.HIGH || 0;
@@ -85,10 +87,11 @@ async function triggerSec1Scan(apiUrl, apiKey, filePath) {
             console.log('Total CVE Vulnerability :', summary.totalCve);
             console.log('Report URL :', summary.reportUrl);
 
-            //var thresholdCheck = tl.getInput('thresholdCheck', true) || 'false';
-            var thresholdCheck = 'false';
+            var thresholdCheckInput = tl.getInput('thresholdCheck', true) || 'false';
+            //var thresholdCheckInput = 'true';
+            const thresholdCheck = thresholdCheckInput.toLowerCase() === 'true';
             var thresholdMap = getThresholdMap();
-            if (!thresholdCheck && thresholdMap.size > 0 && checkIfThresholdReached(summary, thresholdMap)) {
+            if (thresholdCheck && thresholdMap.size > 0 && checkIfThresholdReached(summary, thresholdMap)) {
                 console.error('Vulnerabilities reported are more than threshold.');
                 tl.setResult(tl.TaskResult.Failed, "Vulnerabilities reported are more than threshold");
             }
@@ -97,7 +100,10 @@ async function triggerSec1Scan(apiUrl, apiKey, filePath) {
         if(e.response && e.response.data && e.response.data.errorMessage){
             printErrorResponse(options, e.response.data.errorMessage);
         }
-        console.log(e);
+        tl.setResult(tl.TaskResult.Failed, e);
+        if (e.response.data) {
+            console.log("Error while executing Sec1 Security scan : ", e.response.data);
+        }
     });
   }
 
@@ -137,15 +143,14 @@ function checkFilePresence(filePath) {
   }
 
   function getThresholdMap() {
-    // const critical = tl.getInput('critical', true) || '1';
-    // const high = tl.getInput('high', true) || '0';
-    // const medium = tl.getInput('medium', true) || '0';
-    // const low = tl.getInput('low', true) || '0';
-    const critical = '1';
-    const high = '0';
-    const medium = '0';
-    const low = '0';
-
+    const critical = tl.getInput('critical', true) || '1';
+    const high = tl.getInput('high', true) || '0';
+    const medium = tl.getInput('medium', true) || '0';
+    const low = tl.getInput('low', true) || '0';
+    // const critical = '1';
+    // const high = '0';
+    // const medium = '0';
+    // const low = '0';
 
     let data = new Map();
     if (!isNaN(critical)) {

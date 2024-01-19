@@ -1,11 +1,7 @@
 # Azure DevOps Extension
 
-<p align="center">
-  <a href="https://sec1.io" style="float:left; margin-right:10px;">
-    <img src="https://storage.googleapis.com/sec1-shared-assets/sec1-logo-512x512.png" alt="Sec1" width="50" height="50">
-  </a>
-  <strong>Sec1 Security Azure DevOps Extension Version 1.0.0</strong>
-</p>
+[<img src="https://storage.googleapis.com/sec1-shared-assets/sec1-logo-512x512.png" alt="Sec1" width="50" height="50">](https://sec1.io)
+Sec1 Security Azure DevOps Extension Version 1.0.0
 
 ## Introduction
 
@@ -25,7 +21,7 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
 - Click on "Get it free", select the "Azure DevOps organization" where you would like to install and click "Install".
 - Once installation is complete then "Proceed to organisation"
 
-## 2. Configure an Sec1 Security API Token
+## 2. Configure API Token
 
   You need to configure API Token as Generic Service Connection
   
@@ -71,9 +67,9 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
 
 ## 4. Configuration Parameters
 
-### Configure the following parameters in the "Sec1 Settings" section:
+### Configure the following parameters in the "Sec1 Security Settings" while adding extention to build step:
 
-  * `Apply Threshold` (<b>optional</b>) If selected, define your vulnerability threshold levels by "Severity". Default values for Critical and High are 0 and 10 respectively <br /> 
+  * `Enable the Threshold Check` (<b>optional</b>) If selected, define your vulnerability threshold levels by "Severity". Default values for Critical and High are 0 and 10 respectively <br /> 
     
     * If you set the critical vulnerability threshold to 10, your build will fail if more than 10 critical vulnerabilities are found in the scan.
     * Choose actions for the breach: Fail or Continue.
