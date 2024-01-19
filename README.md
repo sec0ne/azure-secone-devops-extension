@@ -1,7 +1,10 @@
 # Azure DevOps Extension
 
-[<img src="https://storage.googleapis.com/sec1-shared-assets/sec1-logo-512x512.png" alt="Sec1" width="40" height="40">](https://sec1.io)
-Sec1 Security Azure DevOps Extension Version 1.0.0
+<div align="center">
+  [<img src="https://storage.googleapis.com/sec1-shared-assets/sec1-logo-512x512.png" alt="Sec1" width="50" height="50">](https://sec1.io)
+  <br>
+  Sec1 Security Azure DevOps Extension Version 1.0.0
+</div>
 
 ## Introduction
 
