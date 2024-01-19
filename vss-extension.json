@@ -2,19 +2,28 @@
     "manifestVersion": 1,
     "id": "build-release-task",
     "name": "Sec1 Security",
-    "version": "0.0.25",
+    "version": "0.3.2",
     "publisher": "Sec1",
     "targets": [
         {
             "id": "Microsoft.VisualStudio.Services"
         }
     ],    
-    "description": "Tools for FOSS Scanning with Sec1",
+    "description": "Sec1 Security FOSS Vulnerability Scanner",
+    "content": {
+        "details": {
+            "path": "README.md"
+        }
+    },
+    "repository": {
+        "type": "git",
+        "uri": "https://github.com/sec0ne/azure-secone-devops-extension"
+    },
     "categories": [
         "Azure Pipelines"
     ],
     "icons": {
-        "default": "images/extension-icon.jpeg"        
+        "default": "images/extension-icon.png"        
     },
     "files": [
         {

@@ -3,24 +3,34 @@ const axios = require('axios');
 const fs = require('fs');
 const FormData = require('form-data');
 
+
 function run() {
   try {
     
-    const serviceConnectionId = tl.getInput('serviceConnection', true) || '';
+    // const serviceConnectionId = tl.getInput('serviceConnection', true) || '';
    
-    if (!serviceConnectionId) {
-        throw new Error('Service connection not found or authorization details missing.');
-    }
+    // if (!serviceConnectionId) {
+    //     throw new Error('Service connection not found or authorization details missing.');
+    // }
 
-    const serviceConnection = tl.getEndpointAuthorization(serviceConnectionId, false);
-    if (!serviceConnection) {
-        throw new Error('Service connection not found or authorization details missing.');
-    }
+    // const serviceConnection = tl.getEndpointAuthorization(serviceConnectionId, false);
+    // if (!serviceConnection) {
+    //     throw new Error('Service connection not found or authorization details missing.');
+    // }
 
-    const apiKey = serviceConnection.parameters['password'];
-
+    // const apiKey = serviceConnection.parameters['password'];
+    const apiKey = 'secone-b7acc51cc87c6b3afa6bc4e006faa73dbb317f145d8977627f69dc9e89db708f';
     const apiUrl = 'https://api.sec1.io/rest/foss'; // Replace with your actual API endpoint
-    const filePath = 'pom.xml'; // Replace with the actual file path
+    var filePath;
+    if(checkFilePresence('pom.xml')) {
+        filePath = 'pom.xml';
+    } else if(checkFilePresence('package.json')) {
+        filePath = '/Users/dineshrawat/Desktop/TestWorkspace/vulnerable-node/package.json';
+    } else {
+        throw new Error('Repo not supported. Supported Repos are Maven and NodeJS repo');
+    }
+
+    console.log("File Path : ", filePath);
 
     triggerSec1Scan(apiUrl, apiKey, filePath);
     // Set the task result
@@ -74,6 +84,14 @@ async function triggerSec1Scan(apiUrl, apiKey, filePath) {
             console.log('Low Vulnerability :', summary.low);
             console.log('Total CVE Vulnerability :', summary.totalCve);
             console.log('Report URL :', summary.reportUrl);
+
+            //var thresholdCheck = tl.getInput('thresholdCheck', true) || 'false';
+            var thresholdCheck = 'false';
+            var thresholdMap = getThresholdMap();
+            if (!thresholdCheck && thresholdMap.size > 0 && checkIfThresholdReached(summary, thresholdMap)) {
+                console.error('Vulnerabilities reported are more than threshold.');
+                tl.setResult(tl.TaskResult.Failed, "Vulnerabilities reported are more than threshold");
+            }
         }
     }).catch((e) => {
         if(e.response && e.response.data && e.response.data.errorMessage){
@@ -84,8 +102,6 @@ async function triggerSec1Scan(apiUrl, apiKey, filePath) {
   }
 
   function scanRequest(apiEndpoint, apiKey, formData) {
-    //console.log("Start scanning from file")
-    //const fullRepoUrl = "https://github.com/sdthatte/test-scan";
     return axios.post(apiEndpoint + "/scan/file", formData,
         {
             headers: {
@@ -96,20 +112,67 @@ async function triggerSec1Scan(apiUrl, apiKey, filePath) {
 }
 
 function printErrorResponse(options, err) {
-    console.log("=====================Scan Summary=====================")
-    
-    if (options.system == "cli") {
-        console.log(`Scan file : ` + chalk.black.bold(`${options.file}`), );
-        if (err != undefined && err != '') {
-            console.log(chalk.red.bold(err));
-        }
-        console.log(chalk.red.bold("Error occurred while scanning. Please check the scanned manifest"))
-    } else if (options.system == "gitaction") {
-        if (err != undefined && err != '') {
-            core.error(err);
-        }
-        core.setFailed("Error occurred while scanning. Please check git action configuration")
+    console.log("=====================Scan Summary=====================");
+    console.log(`Scan file : ` + chalk.black.bold(`${options.file}`), );
+    if (err != undefined && err != '') {
+        console.log(chalk.red.bold(err));
     }
+    console.log(chalk.red.bold("Error occurred while scanning. Please check the scanned manifest"))
+}
+
+function checkFilePresence(filePath) {
+    try {
+      fs.accessSync(filePath, fs.constants.F_OK);
+      return true;
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        console.log(`File '${filePath}' does not exist.`);
+        return false;
+      } else {
+        // Handle other errors
+        console.error(`Error checking file existence: ${error.message}`);
+        return false;
+      }
+    }
+  }
+
+  function getThresholdMap() {
+    // const critical = tl.getInput('critical', true) || '1';
+    // const high = tl.getInput('high', true) || '0';
+    // const medium = tl.getInput('medium', true) || '0';
+    // const low = tl.getInput('low', true) || '0';
+    const critical = '1';
+    const high = '0';
+    const medium = '0';
+    const low = '0';
+
+
+    let data = new Map();
+    if (!isNaN(critical)) {
+        data.set('critical', critical);
+    }
+    if (!isNaN(critical)) {
+        data.set('high', high);
+    }
+    if (!isNaN(critical)) {
+        data.set('medium', medium);
+    }
+    if (!isNaN(critical)) {
+        data.set('low', low);
+    }
+    console.log("Threshold Values : ", data);
+    return data;
+}
+
+function checkIfThresholdReached(summary, thresholdMap) {
+    let thresholdBreak = false;
+    thresholdMap.forEach((value, severity) => {
+        if (summary[severity] >= value) {
+            thresholdBreak = true
+        }
+    })
+    console.log("Threshold Break : ", thresholdBreak)
+    return thresholdBreak;
 }
 
 // Run the task

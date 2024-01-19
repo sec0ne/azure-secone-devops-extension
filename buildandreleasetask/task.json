@@ -21,6 +21,46 @@
             "defaultValue": "",
             "required": true,
             "helpMarkDown": "Choose service connection for Sec1 Credentials"
+        },
+        {
+            "name": "thresholdCheck",
+            "type": "boolean",
+            "label": "Enable the Threshold Check",
+            "defaultValue": false,
+            "helpMarkDown": "Check this box to enable the Threshold Check in your pipeline and it will fail if vulnerability threshold level crosses.",
+            "required": false
+        },
+        {
+            "name": "critical",
+            "type": "string",
+            "label": "Enter a threshold value for Critical",
+            "defaultValue": "0",
+            "required": false,
+            "helpMarkDown": "Enter a threshold value for Critical"
+        },
+        {
+            "name": "high",
+            "type": "string",
+            "label": "Enter a threshold value for High",
+            "defaultValue": "0",
+            "required": false,
+            "helpMarkDown": "Enter a threshold value for High"
+        },
+        {
+            "name": "medium",
+            "type": "string",
+            "label": "Enter a threshold value for Medium",
+            "defaultValue": "0",
+            "required": false,
+            "helpMarkDown": "Enter a threshold value for Medium"
+        },
+        {
+            "name": "low",
+            "type": "string",
+            "label": "Enter a threshold value for Low",
+            "defaultValue": "0",
+            "required": false,
+            "helpMarkDown": "Enter a threshold value for low"
         }
     ],
     "execution": {
