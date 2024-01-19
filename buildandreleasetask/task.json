@@ -1,0 +1,31 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
+    "id": "8a647ca2-47fe-429e-b6ba-9c2aa36bac28",
+    "name": "Sec1Security",
+    "friendlyName": "Sec1 Security",
+    "description": "Sec1 Security provides FOSS scan capability to scan repo and provide vulnerabilities",
+    "helpMarkDown": "",
+    "category": "Utility",
+    "author": "Sec1",
+    "version": {
+        "Major": 0,
+        "Minor": 1,
+        "Patch": 0
+    },
+    "instanceNameFormat": "Sec1 Security",
+    "inputs": [
+        {
+            "name": "serviceConnection",
+            "type": "connectedService:Generic",
+            "label": "Select a Service Connection",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Choose service connection for Sec1 Credentials"
+        }
+    ],
+    "execution": {
+        "Node16": {
+            "target": "index.js"
+        }
+    }
+    }
