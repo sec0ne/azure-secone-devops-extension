@@ -10,7 +10,7 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
 ## Integration Steps
 
 1. [Install the Sec1 Security Extension](#1-install-the-sec1-security-plugin)
-2. [Configure an Sec1 Security API Token](#2-configure-an-scm-access-token)
+2. [Configure API Token](#2-configure-an-scm-access-token)
 3. [Configure Sec1 Security as a Build Step](#3-configure-sec1-security-as-a-build-step)
 4. [Configuration Parameters](#4-configuration-parameters)
    
@@ -43,7 +43,7 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
 <details>
 <summary>📷 Show Preview</summary>
 
-![Sec1 Generic Connection](images/sec1-generic-connection.png)
+![Sec1 Generic Connection](https://digitalassets.sec1.io/sec1-generic-connection.png)
 
 </details>
 </blockquote>
@@ -60,7 +60,7 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
 <details>
 <summary>📷 Show Preview</summary>
 
-![Sec1 Security Build Task](images/sec1-build-step.png)
+![Sec1 Security Build Task](https://digitalassets.sec1.io/sec1-build-step.png)
 
 </details>
 </blockquote>

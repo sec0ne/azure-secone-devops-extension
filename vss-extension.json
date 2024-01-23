@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "build-release-task",
     "name": "Sec1 Security",
-    "version": "0.3.10",
+    "version": "1.0.0",
     "publisher": "Sec1",
     "targets": [
         {
@@ -14,10 +14,6 @@
         "details": {
             "path": "README.md"
         }
-    },
-    "repository": {
-        "type": "git",
-        "uri": "https://github.com/sec0ne/azure-secone-devops-extension"
     },
     "categories": [
         "Azure Pipelines"
@@ -39,18 +35,6 @@
             ],
             "properties": {
                 "name": "buildandreleasetask"
-            }
-        },
-        {
-            "id": "build-info-tab",
-            "type": "ms.vss-build-web.build-results-tab",
-            "description": "A tab contributing to build results view",
-            "targets": [
-                "ms.vss-build-web.build-results-view"
-            ],
-            "properties": {
-                "name": "Sec1 Security",
-                 "uri": "buildandreleasetask/summary-tab.html"
             }
         },
         {

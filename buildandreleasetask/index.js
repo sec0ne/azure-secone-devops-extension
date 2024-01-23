@@ -19,7 +19,6 @@ function run() {
     }
 
     const apiKey = serviceConnection.parameters['password'];
-    //const apiKey = 'secone-b7acc51cc87c6b3afa6bc4e006faa73dbb317f145d8977627f69dc9e89db708f';
     const apiUrl = 'https://api.sec1.io/rest/foss'; // Replace with your actual API endpoint
     var filePath;
     if(checkFilePresence('pom.xml')) {
@@ -147,10 +146,6 @@ function checkFilePresence(filePath) {
     const high = tl.getInput('high', true) || '0';
     const medium = tl.getInput('medium', true) || '0';
     const low = tl.getInput('low', true) || '0';
-    // const critical = '1';
-    // const high = '0';
-    // const medium = '0';
-    // const low = '0';
 
     let data = new Map();
     if (!isNaN(critical)) {
