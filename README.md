@@ -57,9 +57,11 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
 
 ![Sec1 Security Build Task](https://digitalassets.sec1.io/sec1-build-step.png)
 
+</details>
+</blockquote>
+
 You can also copy below code snippet to directly copy in pipeline yaml file.
 ````
-```
 - task: Sec1Security@0
   inputs:
     serviceConnection: '<<Enter Service Connection Name e.g. Sec1ServiceConnection>>'
@@ -68,11 +70,7 @@ You can also copy below code snippet to directly copy in pipeline yaml file.
     high: '5'
     medium: '10'
     low: '20'
-```
 ````
-
-</details>
-</blockquote>
 
 ## 4. Configuration Parameters
 
