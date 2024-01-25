@@ -34,7 +34,6 @@
             "name": "critical",
             "type": "string",
             "label": "Enter a threshold value for Critical",
-            "defaultValue": "0",
             "required": false,
             "helpMarkDown": "Enter a threshold value for Critical"
         },
@@ -42,7 +41,6 @@
             "name": "high",
             "type": "string",
             "label": "Enter a threshold value for High",
-            "defaultValue": "0",
             "required": false,
             "helpMarkDown": "Enter a threshold value for High"
         },
@@ -50,7 +48,6 @@
             "name": "medium",
             "type": "string",
             "label": "Enter a threshold value for Medium",
-            "defaultValue": "0",
             "required": false,
             "helpMarkDown": "Enter a threshold value for Medium"
         },
@@ -58,7 +55,6 @@
             "name": "low",
             "type": "string",
             "label": "Enter a threshold value for Low",
-            "defaultValue": "0",
             "required": false,
             "helpMarkDown": "Enter a threshold value for low"
         }

@@ -87,12 +87,13 @@ async function triggerSec1Scan(apiUrl, apiKey, filePath) {
             console.log('Report URL :', summary.reportUrl);
 
             var thresholdCheckInput = tl.getInput('thresholdCheck', true) || 'false';
-            //var thresholdCheckInput = 'true';
             const thresholdCheck = thresholdCheckInput.toLowerCase() === 'true';
-            var thresholdMap = getThresholdMap();
-            if (thresholdCheck && thresholdMap.size > 0 && checkIfThresholdReached(summary, thresholdMap)) {
-                console.error('Vulnerabilities reported are more than threshold.');
-                tl.setResult(tl.TaskResult.Failed, "Vulnerabilities reported are more than threshold");
+            if (thresholdCheck) {
+                var thresholdMap = getThresholdMap();
+                if (thresholdMap.size > 0 && checkIfThresholdReached(summary, thresholdMap)) {
+                    console.error('Vulnerabilities reported are more than threshold.');
+                    tl.setResult(tl.TaskResult.Failed, "Vulnerabilities reported are more than threshold");
+                }
             }
         }
     }).catch((e) => {
@@ -142,25 +143,25 @@ function checkFilePresence(filePath) {
   }
 
   function getThresholdMap() {
-    const critical = tl.getInput('critical', true) || '1';
-    const high = tl.getInput('high', true) || '0';
-    const medium = tl.getInput('medium', true) || '0';
-    const low = tl.getInput('low', true) || '0';
+    const critical = tl.getInput('critical') || '0';
+    const high = tl.getInput('high') || '0';
+    const medium = tl.getInput('medium') || '0';
+    const low = tl.getInput('low') || '0';
 
     let data = new Map();
     if (!isNaN(critical)) {
         data.set('critical', critical);
     }
-    if (!isNaN(critical)) {
+    if (!isNaN(high)) {
         data.set('high', high);
     }
-    if (!isNaN(critical)) {
+    if (!isNaN(medium)) {
         data.set('medium', medium);
     }
-    if (!isNaN(critical)) {
+    if (!isNaN(low)) {
         data.set('low', low);
     }
-    console.log("Threshold Values : ", data);
+    console.log(data);
     return data;
 }
 

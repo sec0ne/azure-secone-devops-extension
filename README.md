@@ -2,6 +2,9 @@
 
 Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers and teams to enhance the security of their software projects by scanning Source Code Management (SCM) repositories for open-source vulnerabilities against the Sec1 Security Database. This documentation provides a step-by-step guide on integrating the Sec1 Security Extension into your Azure CI/CD pipelines.
 
+## Prerequisite
+- [Setup your pipeline](https://learn.microsoft.com/en-us/azure/devops/pipelines/create-first-pipeline?view=azure-devops&tabs=java%2Ctfs-2018-2%2Cbrowser)
+
 ## Integration Steps
 
 1. [Install the Sec1 Security Extension](#1-install-the-sec1-security-plugin)
@@ -57,9 +60,11 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
 
 ![Sec1 Security Build Task](https://digitalassets.sec1.io/sec1-build-step.png)
 
+</details>
+</blockquote>
+
 You can also copy below code snippet to directly copy in pipeline yaml file.
 ````
-```
 - task: Sec1Security@0
   inputs:
     serviceConnection: '<<Enter Service Connection Name e.g. Sec1ServiceConnection>>'
@@ -68,11 +73,7 @@ You can also copy below code snippet to directly copy in pipeline yaml file.
     high: '5'
     medium: '10'
     low: '20'
-```
 ````
-
-</details>
-</blockquote>
 
 ## 4. Configuration Parameters
 
