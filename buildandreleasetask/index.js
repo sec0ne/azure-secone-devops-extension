@@ -143,10 +143,10 @@ function checkFilePresence(filePath) {
   }
 
   function getThresholdMap() {
-    const critical = tl.getInput('critical') || '0';
-    const high = tl.getInput('high') || '0';
-    const medium = tl.getInput('medium') || '0';
-    const low = tl.getInput('low') || '0';
+    const critical = tl.getInput('critical');
+    const high = tl.getInput('high');
+    const medium = tl.getInput('medium');
+    const low = tl.getInput('low');
 
     let data = new Map();
     if (!isNaN(critical)) {
