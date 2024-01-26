@@ -24,7 +24,7 @@ function run() {
     if(checkFilePresence('pom.xml')) {
         filePath = 'pom.xml';
     } else if(checkFilePresence('package.json')) {
-        filePath = '/Users/dineshrawat/Desktop/TestWorkspace/vulnerable-node/package.json';
+        filePath = 'package.json';
     } else {
         throw new Error('Repo not supported. Supported Repos are Maven and NodeJS repo');
     }
@@ -62,7 +62,7 @@ async function triggerSec1Scan(apiUrl, apiKey, filePath) {
     formData.append('request', JSON.stringify(requestJson));
   
     scanRequest(apiUrl, apiKey, formData).then((res) => {
-        let responseObject = res.data.body
+        let responseObject = res.data
         let summary = {};
         summary.scanFile = filePath;
         if (responseObject.errorMessage != undefined && responseObject.errorMessage != '') {
