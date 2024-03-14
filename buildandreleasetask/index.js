@@ -2,11 +2,18 @@ const tl = require('azure-pipelines-task-lib/task');
 const axios = require('axios');
 const fs = require('fs');
 const FormData = require('form-data');
+const path = require('path');
+
+// ANSI escape codes for colors
+const redColor = '\x1b[31m';
+const greenColor = '\x1b[32m';
+const resetColor = '\x1b[0m';
+const darkAmberColor = '\x1b[33m';
 
 
 function run() {
   try {
-    
+    console.log('Sec1 SCA Scanner Started ...');
     const serviceConnectionId = tl.getInput('serviceConnection', true) || '';
    
     if (!serviceConnectionId) {
@@ -18,20 +25,14 @@ function run() {
         throw new Error('Service connection not found or authorization details missing.');
     }
 
+    const repoUrl = getRepositoryUrl();
+    
     const apiKey = serviceConnection.parameters['password'];
     const apiUrl = 'https://api.sec1.io/rest/foss'; // Replace with your actual API endpoint
-    var filePath;
-    if(checkFilePresence('pom.xml')) {
-        filePath = 'pom.xml';
-    } else if(checkFilePresence('package.json')) {
-        filePath = 'package.json';
-    } else {
-        throw new Error('Repo not supported. Supported Repos are Maven and NodeJS repo');
-    }
+    
+    const selectedFilePath = getSelectedPath();
 
-    console.log("File Path : ", filePath);
-
-    triggerSec1Scan(apiUrl, apiKey, filePath);
+    triggerSec1Scan(apiUrl, apiKey, selectedFilePath, repoUrl);
     // Set the task result
     tl.setResult(tl.TaskResult.Succeeded, 'Task completed successfully');
 
@@ -41,15 +42,46 @@ function run() {
   }
 }
 
-async function triggerSec1Scan(apiUrl, apiKey, filePath) {
+function getRepositoryUrl() {
+    const repoUrl = tl.getVariable('Build.Repository.Uri');
+    return repoUrl;
+}
+
+function getSelectedPath() {
+    let filePath = tl.getInput('packagePath') || '';
+    filePath = filePath.trim();
+
+    let selectedFilePath;
+
+    //File path is not blank or file path is not equal to current directory which means it should look up for pom.xml directly.
+    if (filePath !== '' && filePath !== process.cwd() && checkFilePresence(filePath) ) {
+        selectedFilePath = filePath;
+    } else if (checkFilePresence('pom.xml')) {
+        // If `filePath` is blank, check for the presence of 'pom.xml'
+        selectedFilePath = 'pom.xml';
+    } else if (checkFilePresence('package.json')) {
+        // If 'pom.xml' is not present, check for the presence of 'package.json'
+        selectedFilePath = 'package.json';
+    } else {
+        // If neither 'pom.xml' nor 'package.json' is present
+        throw new Error('Repo not supported. Supported Repos are Maven and NodeJS repo');
+    }
+    console.log('Selected File for Sec1 Scanner :', selectedFilePath);
+    return selectedFilePath;
+}
+
+async function triggerSec1Scan(apiUrl, apiKey, filePath, repoUrl) {
     // API endpoint URL
     const url = apiUrl;
+
+    const strippedUrl = repoUrl.replace(/^https:\/\/[^@]+@/, 'https://');
   
     // Request parameters
     const requestJson = {
-        source: 'cli'
+        source: 'azure-ci',
+        location: strippedUrl
     };
-  
+
     // Set headers
     const headers = {
       'sec1-api-key': apiKey,
@@ -60,17 +92,18 @@ async function triggerSec1Scan(apiUrl, apiKey, filePath) {
     const formData = new FormData();
     formData.append('file', fs.createReadStream(filePath));
     formData.append('request', JSON.stringify(requestJson));
-  
+
     scanRequest(apiUrl, apiKey, formData).then((res) => {
         let responseObject = res.data
         let summary = {};
-        summary.scanFile = filePath;
         if (responseObject.errorMessage != undefined && responseObject.errorMessage != '') {
-            printErrorResponse(options, responseObject.errorMessage);
+            console.error("Error while carrying out Sec1 SCA Scan: ", responseObject.errorMessage);
             tl.setResult(tl.TaskResult.Failed, responseObject.errorMessag);
         } else if(responseObject.status == "FAILED" ){
-            options.file = summary.scanFile
-            printErrorResponse(options, "Scan failed for report : " + responseObject.reportId);
+            console.log('Sec1 Container Image Scanner Report :');
+            console.log('Report ID:', responseObject.reportId);
+            console.log('Report URL:', responseObject.reportUrl);
+            console.log(`Status:${redColor} FAILURE${resetColor}`);
             tl.setResult(tl.TaskResult.Failed, responseObject.errorMessag);
         } else {
             summary.critical = responseObject.cveCountDetails.CRITICAL || 0;
@@ -79,19 +112,17 @@ async function triggerSec1Scan(apiUrl, apiKey, filePath) {
             summary.low = responseObject.cveCountDetails.LOW || 0;
             summary.totalCve = responseObject.totalCve || 0;
             summary.reportUrl = responseObject.reportUrl;
-            console.log('Critical Vulnerability :', summary.critical);
-            console.log('High Vulnerability :', summary.high);
-            console.log('Medium Vulnerability :', summary.medium);
-            console.log('Low Vulnerability :', summary.low);
-            console.log('Total CVE Vulnerability :', summary.totalCve);
-            console.log('Report URL :', summary.reportUrl);
+            console.log('');
+            console.log('Sec1 SCA Scanner Report:');
+            console.log('Report URL: ', summary.reportUrl);
+            console.log('Total Vulnerablities: ', summary.totalCve);
+            console.log(`Vulnerability Details:  ${redColor}Critical: ${summary.critical}${resetColor}, ${darkAmberColor}High: ${summary.high}${resetColor}, Medium: ${summary.medium}, Low: ${summary.low}`);
 
             var thresholdCheckInput = tl.getInput('thresholdCheck', true) || 'false';
             const thresholdCheck = thresholdCheckInput.toLowerCase() === 'true';
             if (thresholdCheck) {
                 var thresholdMap = getThresholdMap();
                 if (thresholdMap.size > 0 && checkIfThresholdReached(summary, thresholdMap)) {
-                    console.error('Vulnerabilities reported are more than threshold.');
                     tl.setResult(tl.TaskResult.Failed, "Vulnerabilities reported are more than threshold");
                 }
             }
@@ -161,7 +192,6 @@ function checkFilePresence(filePath) {
     if (!isNaN(low)) {
         data.set('low', low);
     }
-    console.log(data);
     return data;
 }
 
@@ -172,7 +202,13 @@ function checkIfThresholdReached(summary, thresholdMap) {
             thresholdBreak = true
         }
     })
-    console.log("Threshold Break : ", thresholdBreak)
+
+    // Determine the color based on the value of thresholdBreak
+    const color = thresholdBreak ? redColor : greenColor;
+
+    // Print the boolean value in upper case with the appended string in the determined color
+    console.log(`\nThreshold Break:${color} ${String(thresholdBreak).toUpperCase()}${resetColor}`);
+
     return thresholdBreak;
 }
 

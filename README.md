@@ -33,6 +33,7 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
   - Password/Token Key - Provide SecAPI Security API Token.
   - Service connection name - Provide appropriate service connection name (e.g. Sec1SecurityServiceConnection).
   - Description - It is option field but you can provide appropriate description.
+  - Grant access permission to all pipelines - Select checkbox in case you want to grant the permission to all pipeline otherwise you need to grant the permission to individual pipeline during execution.
 
   <b>Note</b> : To get `SecAPI Security API Token` navigate to [Scopy](https://scopy.sec1.io/) > "Login with GitHub" > "Settings"
   In the "API key" section, click on "Generate API key" and copy it for use.
@@ -52,6 +53,7 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
 - Click on "Edit".
 - Search "Sec1 Security" in the tasks search box and select the result.
 - Select Service Connection which you have added as Generic Service Connection in dropdown.
+- Enter location of package (pom.xml or package.json) file (if it is present under nested folder otherwise leave it blank). In case of blank, it will locate the file in current folder of repo.
 - Click "Add"
 
 <blockquote>
