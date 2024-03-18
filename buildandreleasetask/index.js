@@ -9,11 +9,15 @@ const redColor = '\x1b[31m';
 const greenColor = '\x1b[32m';
 const resetColor = '\x1b[0m';
 const darkAmberColor = '\x1b[33m';
+const startIcon = "\u25B6"; // Unicode character for black right-pointing triangle
+const greenTickIcon = "\x1b[32m\u2714\x1b[0m";
+const redCrossIcon = "\x1b[31m\u2716\x1b[0m"; // Red cross icon (using ASCII escape sequence)
+const boldText = "\x1b[1m"; // ASCII escape sequence for bold text
 
 
 function run() {
   try {
-    console.log('Sec1 SCA Scanner Started ...');
+    console.log(`${startIcon} ${boldText}Sec1 SCA Scanner Started ...${resetColor}`);
     const serviceConnectionId = tl.getInput('serviceConnection', true) || '';
    
     if (!serviceConnectionId) {
