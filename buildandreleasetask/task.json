@@ -9,18 +9,25 @@
     "author": "Sec1",
     "version": {
         "Major": 1,
-        "Minor": 0,
-        "Patch": 8
+        "Minor": 1,
+        "Patch": 0
     },
     "instanceNameFormat": "Sec1 Security",
+    "groups": [
+        {
+            "name": "thresholdCheckGroup",
+            "displayName": "Threshold Check",
+            "isExpanded": false
+        }
+    ],
     "inputs": [
         {
             "name": "serviceConnection",
             "type": "connectedService:Generic",
-            "label": "Select a Service Connection",
+            "label": "Sec1 API Key",
             "defaultValue": "",
             "required": true,
-            "helpMarkDown": "Choose service connection for Sec1 Credentials"
+            "helpMarkDown": "Choose service connection for Sec1 API Key"
         },
         {
             "name": "packagePath",
@@ -34,6 +41,7 @@
             "name": "thresholdCheck",
             "type": "boolean",
             "label": "Enable the Threshold Check",
+            "groupName": "thresholdCheckGroup",
             "defaultValue": false,
             "helpMarkDown": "Check this box to enable the Threshold Check in your pipeline and it will fail if vulnerability threshold level crosses.",
             "required": false
@@ -42,6 +50,7 @@
             "name": "critical",
             "type": "string",
             "label": "Enter a threshold value for Critical",
+            "groupName": "thresholdCheckGroup",
             "required": false,
             "helpMarkDown": "Enter a threshold value for Critical"
         },
@@ -49,6 +58,7 @@
             "name": "high",
             "type": "string",
             "label": "Enter a threshold value for High",
+            "groupName": "thresholdCheckGroup",
             "required": false,
             "helpMarkDown": "Enter a threshold value for High"
         },
@@ -56,6 +66,7 @@
             "name": "medium",
             "type": "string",
             "label": "Enter a threshold value for Medium",
+            "groupName": "thresholdCheckGroup",
             "required": false,
             "helpMarkDown": "Enter a threshold value for Medium"
         },
@@ -63,6 +74,7 @@
             "name": "low",
             "type": "string",
             "label": "Enter a threshold value for Low",
+            "groupName": "thresholdCheckGroup",
             "required": false,
             "helpMarkDown": "Enter a threshold value for low"
         }
