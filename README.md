@@ -35,7 +35,7 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
   - Description - It is option field but you can provide appropriate description.
   - Grant access permission to all pipelines - Select checkbox in case you want to grant the permission to all pipeline otherwise you need to grant the permission to individual pipeline during execution.
 
-  <b>Note</b> : To get `SecAPI Security API Token` navigate to [Scopy](https://scopy.sec1.io/) > "Login with GitHub" > "Settings"
+  <b>Note</b> : To get `SecAPI Security API Token` navigate to [Scopy](https://unified.sec1.io/) > "Login with GitHub" > "Settings"
   In the "API key" section, click on "Generate API key" and copy it for use.
 
 <blockquote>

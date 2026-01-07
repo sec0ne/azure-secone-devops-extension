@@ -1,0 +1,205 @@
+# Azure DevOps Pipeline for Sec1 Security Extension
+# Copy this file to your GitHub repo root as: azure-pipelines.yml
+
+trigger:
+- main
+- develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # GCP deployment variables - your actual values
+  gcpProjectId: 'cve-buster'
+  gcpZone: 'us-central1-c'
+  gcpVmName: 'playground'  # or 'playground' - choose your target VM
+  
+  # Sec1 configuration - UPDATE THIS with your actual config ID
+  sec1ConfigId: '68c3bffbf6851af8552dad1f'  # Replace with your actual API scan config ID
+
+stages:
+- stage: SecurityAndDeploy
+  displayName: 'Security Scan and Deploy'
+  jobs:
+  - job: SecureDeployment
+    displayName: 'Sec1 Security Scan and Deployment'
+    steps:
+    
+    # Checkout code
+    - checkout: self
+      displayName: 'Checkout Source Code'
+
+    # Verify application files are present
+    - script: |
+        echo "=== File Verification ==="
+        echo "📂 Current working directory: $(pwd)"
+        echo "📋 Listing all files:"
+        ls -la
+        echo ""
+        echo "🔍 Checking for application files:"
+        if [ -f "app.py" ]; then
+          echo "✅ app.py found"
+        else
+          echo "❌ app.py NOT found"
+          exit 1
+        fi
+        
+        if [ -f "requirements.txt" ]; then
+          echo "✅ requirements.txt found"
+        else
+          echo "❌ requirements.txt NOT found"
+          exit 1
+        fi
+        
+        echo ""
+        echo "📂 Application files verified successfully"
+      displayName: 'Verify Required Files'
+
+    # Install Docker for deployment (needed for docker deploymentType)
+    - task: DockerInstaller@0
+      inputs:
+        dockerVersion: '20.10.7'
+      displayName: 'Install Docker'
+      condition: eq(variables['deploymentType'], 'docker')
+
+    # Setup GCP Authentication using Service Account Key
+    - task: DownloadSecureFile@1
+      name: gcpServiceAccount
+      displayName: 'Download GCP Service Account Key'
+      inputs:
+        secureFile: 'gcp-service-account.json'  # Upload your cve-buster-ea8f39d184da.json file with this name
+    
+    - script: |
+        echo "Setting up GCP authentication..."
+        export GOOGLE_APPLICATION_CREDENTIALS=$(gcpServiceAccount.secureFilePath)
+        gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+        gcloud config set project $(gcpProjectId)
+        echo "##vso[task.setvariable variable=GOOGLE_APPLICATION_CREDENTIALS]$GOOGLE_APPLICATION_CREDENTIALS"
+      displayName: 'Authenticate with GCP'
+      
+    - script: |
+        mkdir -p ~/.ssh
+        ssh-keygen -t rsa -f ~/.ssh/google_compute_engine -N ""
+      displayName: 'Pre-generate SSH keys for gcloud'
+
+    # Copy application files to VM
+    - script: |
+        echo "📤 Copying application files to VM..."
+        
+        # Copy application files to home first, then move to /opt/sec1-app with sudo
+        gcloud compute scp app.py requirements.txt $(gcpVmName):~/ --zone=$(gcpZone)
+        gcloud compute ssh $(gcpVmName) --zone=$(gcpZone) --command="sudo mkdir -p /opt/sec1-app && sudo cp ~/app.py ~/requirements.txt /opt/sec1-app/"
+        
+        echo "✅ Application files copied successfully to /opt/sec1-app on VM"
+      displayName: 'Copy Application Files to VM'
+
+    # Clear SSH known hosts to avoid conflicts
+    - script: |
+        echo "🔧 Clearing SSH known hosts to avoid conflicts..."
+        rm -f ~/.ssh/known_hosts
+        rm -f ~/.ssh/google_compute_known_hosts
+        echo "✅ SSH known hosts cleared"
+      displayName: 'Clear SSH Known Hosts'
+
+    # Deploy Python app directly via script
+    - script: |
+        echo "🚀 Deploying Python application..."
+        
+        # Run all deployment commands as root to avoid permission issues
+        echo "🔧 Executing deployment as root..."
+        gcloud compute ssh $(gcpVmName) --zone=$(gcpZone) --ssh-flag="-o StrictHostKeyChecking=no" --command="
+          sudo su - root << 'EOF'
+          echo '🔄 Stopping existing Python processes...'
+          pkill -f 'python.*app.py' || true
+          
+          echo '📦 Installing Python dependencies...'
+          cd /opt/sec1-app
+          export PIP_ROOT_USER_ACTION=ignore
+          pip3 install -r requirements.txt --quiet
+          
+          echo '🚀 Starting Python application with PORT=8000...'
+          PORT=8000 nohup python3 app.py > /tmp/sec1-app.log 2>&1 &
+          
+          echo '⏳ Waiting for application to start...'
+          sleep 3
+          
+          echo '✅ Deployment commands completed'
+        EOF
+        "
+        
+        # Verify application is running
+        echo "🔍 Verifying application is running..."
+        SSH_RESULT=$(gcloud compute ssh $(gcpVmName) --zone=$(gcpZone) --ssh-flag="-o StrictHostKeyChecking=no" --command="pgrep -f 'python.*app.py' | wc -l" || echo "0")
+        
+        if [ "$SSH_RESULT" -gt "0" ]; then
+          echo "✅ Application process found running (PID count: $SSH_RESULT)"
+        else
+          echo "❌ Application process not found. Checking logs..."
+          gcloud compute ssh $(gcpVmName) --zone=$(gcpZone) --ssh-flag="-o StrictHostKeyChecking=no" --command="tail -20 /tmp/sec1-app.log || echo 'No log file found'"
+          echo "🔧 Checking if application files exist..."
+          gcloud compute ssh $(gcpVmName) --zone=$(gcpZone) --ssh-flag="-o StrictHostKeyChecking=no" --command="ls -la /opt/sec1-app/"
+          exit 1
+        fi
+        
+        # Get VM IP and test application accessibility
+        EXTERNAL_IP=$(gcloud compute instances describe $(gcpVmName) --zone=$(gcpZone) --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+        APP_URL="http://${EXTERNAL_IP}:8000"
+        
+        echo "🌐 Testing application accessibility at: $APP_URL"
+        # Wait a bit more for the app to be ready
+        sleep 3
+        
+        # Test if the application responds
+        if curl -f -s --max-time 10 "$APP_URL" > /dev/null; then
+          echo "✅ Application is accessible and responding"
+        else
+          echo "⚠️ Application may not be fully ready yet (this is normal for initial startup)"
+        fi
+        
+        echo "✅ Application deployed successfully!"
+        echo "🌐 Application URL: $APP_URL"
+        echo "##vso[task.setvariable variable=SEC1_DEPLOYED_APP_URL]$APP_URL"
+        echo "##vso[task.setvariable variable=SEC1_DEPLOYMENT_STATUS]success"
+      displayName: 'Deploy Python Application'
+
+    # Run Sec1 Security Scanning (separate from deployment)
+    - task: Sec1APISecurity@1.4.0
+      displayName: 'Sec1 Security Scanning Only'
+      inputs:
+        # Service Connection
+        serviceConnection: 'Sec1SecurityServiceConnection'
+        
+        # Security Scanning Options
+        enableSCA: false
+        enableSAST: false
+        packagePath: 'requirements.txt'
+        
+        # Threshold Configuration
+        thresholdCheck: false
+        critical: '0'
+        high: '5'
+        medium: '10'
+        low: '20'
+        
+        # Disable deployment (we handle it above)
+        enableDeployment: false
+        
+        # API Scanning Configuration
+        enableApiScan: true
+        apiScanConfigId: '$(sec1ConfigId)'
+        apiScanMode: 'async'
+        apiScanTimeout: '10'
+      env:
+        SEC1_WORKING_DIR: '$(System.DefaultWorkingDirectory)'
+        GOOGLE_APPLICATION_CREDENTIALS: '$(GOOGLE_APPLICATION_CREDENTIALS)'
+        CLOUDSDK_CORE_PROJECT: '$(gcpProjectId)'
+
+    # Display deployment results
+    - script: |
+        echo "=== Deployment Summary ==="
+        echo "Application URL: $(SEC1_DEPLOYED_APP_URL)"
+        echo "API Scan Report ID: $(SEC1_API_SCAN_REPORT_ID)"
+        echo "API Scan Report URL: $(SEC1_API_SCAN_REPORT_URL)"
+        echo "Deployment Status: $(SEC1_DEPLOYMENT_STATUS)"
+      displayName: 'Display Deployment Summary'
+      condition: always()

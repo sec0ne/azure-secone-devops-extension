@@ -4,6 +4,10 @@ const fs = require('fs');
 const FormData = require('form-data');
 const path = require('path');
 
+// Import new modules
+const { deployApplication } = require('./deployment');
+const { triggerApiScan } = require('./api-scan');
+
 // ANSI escape codes for colors
 const redColor = '\x1b[31m';
 const greenColor = '\x1b[32m';
@@ -31,6 +35,8 @@ async function run() {
 
         //Read all input and carry out validation
         const inputs = await readInputs();
+        
+        // Phase 1: Security Scanning
         if (inputs.enableSCA) {
             console.log(`${startIcon}${startIcon} Initiating Sec1 SCA Scanner ...${resetColor}`);
             //Trigger SCA Scan
@@ -54,6 +60,55 @@ async function run() {
         } else {
             console.log(`${infoIcon} Sec1 SAST Scanner is disabled. Skipping...${resetColor}`);
         }
+
+        // Only proceed with deployment if security scans pass (or if we're ignoring failures)
+        const continueOnSecurityFailure = tl.getBoolInput('continueOnSecurityFailure', false);
+        
+        if (finalResult === tl.TaskResult.Failed && !continueOnSecurityFailure) {
+            console.log(`${redCrossIcon} Stopping pipeline due to security scan failures`);
+        } else {
+            // Phase 2: Deployment (if enabled)
+            let deploymentResult = null;
+            if (inputs.enableDeployment) {
+                try {
+                    console.log(`${startIcon}${startIcon} Starting Application Deployment ...${resetColor}`);
+                    deploymentResult = await deployApplication();
+                    console.log(`${greenTickIcon}${greenColor} Deployment completed successfully${resetColor}`);
+                } catch (deployError) {
+                    console.error(`${redCrossIcon} Deployment failed: ${deployError.message}`);
+                    const failOnDeploymentError = tl.getBoolInput('failOnDeploymentError', true);
+                    if (failOnDeploymentError) {
+                        finalResult = tl.TaskResult.Failed;
+                        resultMessage = `Deployment failed: ${deployError.message}`;
+                    }
+                }
+            } else {
+                console.log(`${infoIcon} Deployment is disabled. Skipping...${resetColor}`);
+            }
+
+            // Phase 3: API Scanning (if enabled and deployment succeeded)
+            if (inputs.enableApiScan) {
+                try {
+                    console.log(`${startIcon}${startIcon} Starting API Security Scan ...${resetColor}`);
+                    const apiScanResult = await triggerApiScan(deploymentResult?.applicationUrl);
+                    
+                    if (apiScanResult.skipped) {
+                        console.log(`${infoIcon} API scan skipped: ${apiScanResult.reason}${resetColor}`);
+                    } else if (apiScanResult.failed) {
+                        console.error(`${redCrossIcon} API scan failed: ${apiScanResult.error}`);
+                    } else {
+                        console.log(`${greenTickIcon}${greenColor} API scan initiated successfully${resetColor}`);
+                    }
+                } catch (apiScanError) {
+                    console.error(`${redCrossIcon} API scan error: ${apiScanError.message}`);
+                    // API scan errors don't fail the build by default
+                }
+            } else {
+                console.log(`${infoIcon} API scanning is disabled. Skipping...${resetColor}`);
+            }
+        }
+
+        // Update final result message
         if (!scaPassed && !sastPassed) {
             resultMessage = 'Both Sec1 SCA & SAST Scan failed';
         } else if (!scaPassed) {
@@ -61,6 +116,8 @@ async function run() {
         } else if(!sastPassed) {
             resultMessage = 'Sec1 SAST Scan failed';
         }
+        
+        console.log(`${startIcon} ${boldText}Sec1 Security Pipeline Completed${resetColor}`);
         tl.setResult(finalResult, resultMessage);
     } catch (error) {
         console.error(`${redCrossIcon} Error in Sec1 Security Scanner: ${error.message}`);
@@ -76,9 +133,12 @@ async function readInputs() {
 
     const enableSCA = tl.getBoolInput('enableSCA', true);
     const enableSAST = tl.getBoolInput('enableSAST', true);
-    if (!enableSCA && !enableSAST) {
+    const enableDeployment = tl.getBoolInput('enableDeployment', false);
+    const enableApiScan = tl.getBoolInput('enableApiScan', false);
+    
+    /*if (!enableSCA && !enableSAST) {
         throw new Error('At least one scan type (SCA or SAST) must be enabled.');
-    }
+    }*/
 
     const apiKey = getServiceConnectionPassword(serviceConnectionId);
 
@@ -96,7 +156,18 @@ async function readInputs() {
     const medium = validateThreshold(tl.getInput('medium'));
     const low = validateThreshold(tl.getInput('low'));
 
-    return { apiKey, repoUrl, branchName, selectedFilePath, thresholdCheck, thresholds: { critical, high, medium, low }, enableSCA, enableSAST};
+    return { 
+        apiKey, 
+        repoUrl, 
+        branchName, 
+        selectedFilePath, 
+        thresholdCheck, 
+        thresholds: { critical, high, medium, low }, 
+        enableSCA, 
+        enableSAST,
+        enableDeployment,
+        enableApiScan
+    };
 }
 
 function getServiceConnectionPassword(serviceConnectionId) {
