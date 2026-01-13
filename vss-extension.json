@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "build-release-task",
     "name": "Sec1 Security",
-    "version": "1.2.1",
+    "version": "2.0.0",
     "publisher": "Sec1",
     "targets": [
         {

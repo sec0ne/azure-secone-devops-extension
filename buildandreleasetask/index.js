@@ -96,7 +96,10 @@ async function readInputs() {
     const medium = validateThreshold(tl.getInput('medium'));
     const low = validateThreshold(tl.getInput('low'));
 
-    return { apiKey, repoUrl, branchName, selectedFilePath, thresholdCheck, thresholds: { critical, high, medium, low }, enableSCA, enableSAST};
+    // Get tag input, default to branchName if not provided, then 'default' if branchName is also null
+    const tag = tl.getInput('tag') || branchName || 'default';
+
+    return { apiKey, repoUrl, branchName, selectedFilePath, thresholdCheck, thresholds: { critical, high, medium, low }, enableSCA, enableSAST, tag};
 }
 
 function getServiceConnectionPassword(serviceConnectionId) {
@@ -131,7 +134,7 @@ function getSelectedPath() {
 }
 
 async function triggerSCAScan(inputs) {
-    const { apiKey, repoUrl, branchName, selectedFilePath, thresholdCheck, thresholds } = inputs;
+    const { apiKey, repoUrl, branchName, selectedFilePath, thresholdCheck, thresholds, tag } = inputs;
 
     const strippedUrl = repoUrl.replace(/^https:\/\/[^@]+@/, 'https://');
     const moduleName = path.relative(process.cwd(), selectedFilePath);
@@ -141,7 +144,8 @@ async function triggerSCAScan(inputs) {
         source: 'azure-ci',
         location: strippedUrl,
         moduleName: moduleName,
-        branch: branchName
+        branch: branchName,
+        tag: tag
     };
 
     // Set headers
@@ -211,14 +215,15 @@ function scanRequest(apiEndpoint, apiKey, formData) {
 }
 
 async function triggerSASTScan(inputs) {
-    const { apiKey, repoUrl, branchName, thresholdCheck, thresholds} = inputs;
+    const { apiKey, repoUrl, branchName, thresholdCheck, thresholds, tag} = inputs;
     const strippedUrl = repoUrl.replace(/^https:\/\/[^@]+@/, 'https://');
 
     // Request parameters
     const requestPayload = {
         urlType: "azure-scm",
         location: strippedUrl,
-        branchName: branchName
+        branchName: branchName,
+        tag: tag
     };
 
     // Set headers
