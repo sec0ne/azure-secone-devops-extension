@@ -1,6 +1,6 @@
 ## Introduction
 
-Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers and teams to enhance the security of their software projects by scanning Source Code Management (SCM) repositories for open-source vulnerabilities against the Sec1 Security Database. This documentation provides a step-by-step guide on integrating the Sec1 Security Extension into your Azure CI/CD pipelines.
+Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers and teams to enhance the security of their software projects by scanning Source Code Management (SCM) repositories for open-source vulnerabilities (SCA), running Static Application Security Testing (SAST) on source code, and triggering Dynamic Application Security Testing (DAST) scans against deployed applications — all against the Sec1 Security Database. This documentation provides a step-by-step guide on integrating the Sec1 Security Extension into your Azure CI/CD pipelines.
 
 ## Prerequisite
 - [Setup your pipeline](https://learn.microsoft.com/en-us/azure/devops/pipelines/create-first-pipeline?view=azure-devops&tabs=java%2Ctfs-2018-2%2Cbrowser)
@@ -53,7 +53,7 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
 - Click on "Edit".
 - Search "Sec1 Security" in the tasks search box and select the result.
 - Select Service Connection which you have added as Generic Service Connection in dropdown.
-- Enter location of package (pom.xml or package.json) file (if it is present under nested folder otherwise leave it blank). In case of blank, it will locate the file in current folder of repo.
+- Choose the scans to run (SCA, SAST and/or DAST). SCA scans the repository directly on Sec1 infrastructure, so no package file or path needs to be configured.
 - Click "Add"
 
 <blockquote>
@@ -67,9 +67,16 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
 
 You can also copy below code snippet to directly copy in pipeline yaml file.
 ````
-- task: Sec1Security@0
+- task: Sec1Security@2
   inputs:
     serviceConnection: '<<Enter Service Connection Name e.g. Sec1ServiceConnection>>'
+    enableSCA: true
+    enableSAST: true
+    enableDAST: true
+    dastTargetUrl: 'https://staging.example.com'
+    dastScanType: 'quick'
+    asyncScan: false
+    tag: 'default'
     thresholdCheck: true
     critical: '2'
     high: '5'
@@ -81,10 +88,17 @@ You can also copy below code snippet to directly copy in pipeline yaml file.
 
 ### Configure the following parameters in the "Sec1 Security Settings" while adding extention to build step:
 
-  * `Enable the Threshold Check` (<b>optional</b>) If selected, define your vulnerability threshold levels by "Severity". Default values for Critical and High are 0 and 10 respectively <br /> 
+  * `Enable SCA Scan` — Run Software Composition Analysis against your repository. The repository is scanned directly on Sec1 infrastructure (resolved from the SCM URL), so no dependency manifest needs to be uploaded and there is no package-manager restriction.
+  * `Enable SAST Scan` — Run Static Application Security Testing against your source code.
+  * `Enable DAST Scan` — Trigger a Dynamic Application Security Testing scan against a deployed application. When enabled the task fires the Sec1 DAST API and prints the dashboard URL so you can monitor scan progress. The DAST scan continues to run on Sec1 infrastructure after the pipeline step completes.
+    * `DAST Target URL` (<b>required when DAST is enabled</b>) — The fully-qualified URL of the deployed application to scan, e.g. `https://staging.example.com`. Must start with `http://` or `https://`.
+    * `DAST Scan Type` — Choose `Quick` (faster, lighter coverage) or `Deep` (slower, more thorough). Defaults to `Quick`.
+  * `Run scans asynchronously` (<b>optional</b>) — When enabled, the SCA scan is triggered fire-and-forget: the task submits the scan, prints the report URL, and the pipeline continues without waiting for results. Defaults to off (the task waits for SCA results). This option is ignored when Threshold Check is enabled, because evaluating a threshold requires the scan results.
+  * `Tag` (<b>optional</b>) — A label to identify this scan. Defaults to the branch name, or `default` if unavailable.
+  * `Enable the Threshold Check` (<b>optional</b>) If selected, define your vulnerability threshold levels by "Severity". Leave a severity blank to ignore it. <br /> 
     
-    * If you set the critical vulnerability threshold to 10, your build will fail if more than 10 critical vulnerabilities are found in the scan.
-    * Choose actions for the breach: Fail or Continue.
+    * If you set the critical vulnerability threshold to 10, your build will fail if the scan reports 10 or more critical vulnerabilities.
+    * Note: the threshold check applies to SCA and SAST results. DAST scans run asynchronously on Sec1 infrastructure — review results in the dashboard URL printed by the build step.
 
 ## Troubleshooting
 

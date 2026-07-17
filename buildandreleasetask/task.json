@@ -3,14 +3,14 @@
     "id": "782b470c-fa25-41fd-b857-8e2f8dc60e88",
     "name": "Sec1Security",
     "friendlyName": "Sec1 Security Scanner",
-    "description": "Sec1 Security Scanner offers comprehensive scanning capabilities, allowing you to detect vulnerabilities in FOSS repositories and perform SAST scans on source code",
+    "description": "Sec1 Security Scanner offers comprehensive scanning capabilities, allowing you to detect vulnerabilities in FOSS repositories, perform SAST scans on source code, and trigger DAST scans against deployed applications",
     "helpMarkDown": "",
     "category": "Utility",
     "author": "Sec1",
     "version": {
         "Major": 2,
-        "Minor": 0,
-        "Patch": 0
+        "Minor": 2,
+        "Patch": 1
     },
     "instanceNameFormat": "Sec1 Security",
     "groups": [
@@ -53,6 +53,48 @@
             "helpMarkDown": "Check this box to enable Static Application Security Testing (SAST) scan"
         },
         {
+            "name": "enableDAST",
+            "type": "boolean",
+            "label": "Enable DAST Scan",
+            "groupName": "scanOptions",
+            "defaultValue": false,
+            "required": true,
+            "helpMarkDown": "Check this box to enable Dynamic Application Security Testing (DAST) scan. Requires a DAST Configuration ID created in the Sec1 portal."
+        },
+        {
+            "name": "dastTargetUrl",
+            "type": "string",
+            "label": "DAST Target URL",
+            "groupName": "scanOptions",
+            "defaultValue": "",
+            "required": false,
+            "visibleRule": "enableDAST = true",
+            "helpMarkDown": "The fully-qualified URL of the deployed application to scan (e.g. https://staging.example.com). The scan is launched against this target."
+        },
+        {
+            "name": "dastScanType",
+            "type": "radio",
+            "label": "DAST Scan Type",
+            "groupName": "scanOptions",
+            "defaultValue": "quick",
+            "required": false,
+            "visibleRule": "enableDAST = true",
+            "options": {
+                "quick": "Quick",
+                "deep": "Deep"
+            },
+            "helpMarkDown": "Quick scans run faster with lighter coverage. Deep scans are more thorough but take longer. Defaults to Quick."
+        },
+        {
+            "name": "asyncScan",
+            "type": "boolean",
+            "label": "Run scans asynchronously",
+            "groupName": "scanOptions",
+            "defaultValue": false,
+            "required": false,
+            "helpMarkDown": "When enabled, the SCA scan is triggered fire-and-forget: the pipeline does not wait for results. Ignored when Threshold Check is enabled, since thresholds require scan results to evaluate."
+        },
+        {
             "name": "tag",
             "type": "string",
             "label": "Tag",
@@ -60,14 +102,6 @@
             "defaultValue": "default",
             "required": false,
             "helpMarkDown": "Provide a tag to identify this scan. If not provided, 'default' will be used"
-        },
-        {
-            "name": "packagePath",
-            "type": "filePath",
-            "label": "Enter location of package file",
-            "defaultValue": "",
-            "required": false,
-            "helpMarkDown": "Location of pom.xml or package.json or package-lock.json"
         },
         {
             "name": "thresholdCheck",
@@ -112,7 +146,7 @@
         }
     ],
     "execution": {
-        "Node16": {
+        "Node20_1": {
             "target": "index.js"
         }
     }

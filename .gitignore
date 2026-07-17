@@ -1,0 +1,4 @@
+*node_modules
+.DS_Store
+Sec1.sec1-api-security-task-*.vsix
+cve-buster-ea8f39d184da.json
