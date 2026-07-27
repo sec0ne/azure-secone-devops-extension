@@ -10,7 +10,7 @@
     "version": {
         "Major": 2,
         "Minor": 2,
-        "Patch": 1
+        "Patch": 2
     },
     "instanceNameFormat": "Sec1 Security",
     "groups": [
@@ -84,6 +84,25 @@
                 "deep": "Deep"
             },
             "helpMarkDown": "Quick scans run faster with lighter coverage. Deep scans are more thorough but take longer. Defaults to Quick."
+        },
+        {
+            "name": "enableApiSecurity",
+            "type": "boolean",
+            "label": "Enable API Security Scan",
+            "groupName": "scanOptions",
+            "defaultValue": false,
+            "required": true,
+            "helpMarkDown": "Check this box to enable API Security scanning. Requires an API Security Configuration ID created in the Sec1 portal."
+        },
+        {
+            "name": "apiSecurityConfigId",
+            "type": "string",
+            "label": "API Security Config ID",
+            "groupName": "scanOptions",
+            "defaultValue": "",
+            "required": false,
+            "visibleRule": "enableApiSecurity = true",
+            "helpMarkDown": "The API Security Configuration ID created in the Sec1 portal. The scan is triggered against this configuration."
         },
         {
             "name": "asyncScan",
