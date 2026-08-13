@@ -368,7 +368,8 @@ async function triggerSASTScan(inputs) {
     const scanRequest = {
         urlType: 'azure-scm',
         location: strippedUrl,
-        branchName: branchName
+        branchName: branchName,
+        source: 'azure-ci'
     };
     const requestPayload = {
         urlType: 'azure-scm',
