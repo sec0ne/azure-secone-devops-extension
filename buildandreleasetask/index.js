@@ -13,9 +13,9 @@ const boldText = "\x1b[1m"; // ASCII escape sequence for bold text
 const infoIcon = "\u2139"; // Unicode information source character
 
 const scaApiUrl = 'https://api.sec1.io/rest/foss/ascan?enableSbom=true'; // SCA scan trigger endpoint (URL-based)
-const scaStatusUrl = 'https://api.sec1.io/foss/report/status'; // SCA scan status polling endpoint
-const sastApiUrl = 'https://api.sec1.io/foss/sast/ascan'; // SAST async scan trigger endpoint
-const sastStatusUrl = 'https://api.sec1.io/sast/asset/report/status'; // SAST scan status polling endpoint
+const scaStatusUrl = 'https://api.sec1.io/rest/foss/report/status'; // SCA scan status polling endpoint
+const sastApiUrl = 'https://api.sec1.io/rest/foss/sast/ascan'; // SAST async scan trigger endpoint
+const sastStatusUrl = 'https://api.sec1.io/rest/sast/asset/report/status'; // SAST scan status polling endpoint
 const dastApiUrl = 'https://api.sec1.io/aidast/api/rescan'; // DAST trigger endpoint
 const apiSecurityApiUrl = 'https://api.sec1.io/dast/rescan'; // API Security trigger endpoint (config-id based)
 const dashboardUrl = 'https://unified.sec1.io'; // Sec1 dashboard base URL
@@ -362,8 +362,8 @@ async function triggerSASTScan(inputs) {
     const { apiKey, repoUrl, branchName, thresholdCheck, thresholds } = inputs;
     const strippedUrl = repoUrl.replace(/^https:\/\/[^@]+@/, 'https://');
 
-    // The SAST scan is asynchronous: /foss/sast/ascan triggers the scan and
-    // returns a report uuid, then we poll /sast/asset/report/status until the
+    // The SAST scan is asynchronous: /rest/foss/sast/ascan triggers the scan and
+    // returns a report uuid, then we poll /rest/sast/asset/report/status until the
     // scan completes. This mirrors the SCA trigger/poll flow above.
     const scanRequest = {
         urlType: 'azure-scm',
