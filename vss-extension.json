@@ -1,8 +1,8 @@
 {
     "manifestVersion": 1,
     "id": "build-release-task",
-    "name": "Sec1 Security",
-    "version": "2.2.3",
+    "name": "Sec1 Security for Azure DevOps",
+    "version": "2.2.4",
     "publisher": "Sec1",
     "targets": [
         {
