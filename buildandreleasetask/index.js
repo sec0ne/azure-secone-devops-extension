@@ -20,6 +20,10 @@ const dastApiUrl = 'https://api.sec1.io/aidast/api/rescan'; // DAST trigger endp
 const apiSecurityApiUrl = 'https://api.sec1.io/dast/rescan'; // API Security trigger endpoint (config-id based)
 const dashboardUrl = 'https://unified.sec1.io'; // Sec1 dashboard base URL
 
+// A team id is sent as an HTTP header, so only an id-shaped value is accepted.
+const TEAM_ID_HEADER = 'sec1-team-id';
+const TEAM_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
+
 const SCA_POLL_INTERVAL_MS = 10000; // poll status every 10s
 const SCA_POLL_MAX_DURATION_MS = 30 * 60 * 1000; // give up after 30 minutes
 
@@ -168,6 +172,13 @@ async function readInputs() {
     // Get tag input, default to branchName if not provided, then 'default' if branchName is also null
     const tag = tl.getInput('tag') || branchName || 'default';
 
+    // Team the SCA and SAST scans are filed under: the task input, otherwise the
+    // SEC1_TEAM_ID pipeline variable. Blank files them under the API key owner's team.
+    const teamId = readTeamId(tl.getInput('teamId', false) || tl.getVariable('SEC1_TEAM_ID'));
+    if (teamId && (enableSCA || enableSAST)) {
+        console.log(`${infoIcon} Scans will be filed under team ${teamId}.`);
+    }
+
     return {
         apiKey,
         repoUrl,
@@ -182,8 +193,40 @@ async function readInputs() {
         enableApiSecurity,
         apiSecurityConfigId,
         asyncScan,
-        tag
+        tag,
+        teamId
     };
+}
+
+function readTeamId(value) {
+    const teamId = (value || '').trim();
+    if (teamId && !TEAM_ID_PATTERN.test(teamId)) {
+        throw new Error('Sec1 team id is not a team id. Copy the id of the team from Settings > Team in Sec1.');
+    }
+    return teamId;
+}
+
+// Headers of a scan request; the team is named only when one is configured.
+function scanHeaders(apiKey, teamId) {
+    const headers = {
+        'sec1-api-key': apiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    if (teamId) {
+        headers[TEAM_ID_HEADER] = teamId;
+    }
+    return headers;
+}
+
+// The server's reason when it refused to file a scan under the requested team
+// (HTTP 403 with an "error" message); null for any other failure.
+function teamRefusal(error, teamId) {
+    if (!teamId || !error.response || error.response.status !== 403) {
+        return null;
+    }
+    const message = error.response.data && error.response.data.error;
+    return typeof message === 'string' && message.trim() ? message.trim() : null;
 }
 
 function getServiceConnectionPassword(serviceConnectionId) {
@@ -206,7 +249,7 @@ function getAppNameFromUrl(scmUrl) {
 }
 
 async function triggerSCAScan(inputs) {
-    const { apiKey, repoUrl, branchName, thresholdCheck, thresholds, tag, asyncScan } = inputs;
+    const { apiKey, repoUrl, branchName, thresholdCheck, thresholds, tag, asyncScan, teamId } = inputs;
 
     const strippedUrl = repoUrl.replace(/^https:\/\/[^@]+@/, 'https://');
     const appName = getAppNameFromUrl(strippedUrl);
@@ -225,11 +268,7 @@ async function triggerSCAScan(inputs) {
 
     const requestPayload = { scanRequestList: [scanRequest] };
 
-    const headers = {
-        'sec1-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    };
+    const headers = scanHeaders(apiKey, teamId);
 
     console.log(`${boldText}Sec1 SCA Scan Config :${resetColor}`);
     console.log('SCM Url:   ', strippedUrl);
@@ -241,6 +280,11 @@ async function triggerSCAScan(inputs) {
     try {
         triggerResponse = await axios.post(scaApiUrl, requestPayload, { headers });
     } catch (error) {
+        const refusal = teamRefusal(error, teamId);
+        if (refusal) {
+            console.error(`${redCrossIcon} Sec1 SCA scan refused: ${refusal} Check the Sec1 team id.`);
+            return { status: 'FAILED', message: refusal };
+        }
         console.error("Error while triggering Sec1 SCA scan:", error.response?.data || error.message);
         return { status: 'FAILED', message: error.message };
     }
@@ -359,7 +403,7 @@ function sleep(ms) {
 }
 
 async function triggerSASTScan(inputs) {
-    const { apiKey, repoUrl, branchName, thresholdCheck, thresholds } = inputs;
+    const { apiKey, repoUrl, branchName, thresholdCheck, thresholds, teamId } = inputs;
     const strippedUrl = repoUrl.replace(/^https:\/\/[^@]+@/, 'https://');
 
     // The SAST scan is asynchronous: /rest/foss/sast/ascan triggers the scan and
@@ -376,11 +420,7 @@ async function triggerSASTScan(inputs) {
         scanRequestList: [scanRequest]
     };
 
-    const headers = {
-        'sec1-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    };
+    const headers = scanHeaders(apiKey, teamId);
 
     console.log(`${boldText}Sec1 SAST Scan Config :${resetColor}`);
     console.log('SCM Url:   ', strippedUrl);
@@ -391,6 +431,11 @@ async function triggerSASTScan(inputs) {
     try {
         triggerResponse = await axios.post(sastApiUrl, requestPayload, { headers });
     } catch (error) {
+        const refusal = teamRefusal(error, teamId);
+        if (refusal) {
+            console.error(`${redCrossIcon} Sec1 SAST scan refused: ${refusal} Check the Sec1 team id.`);
+            return { status: 'FAILED', message: refusal };
+        }
         console.error("Error while triggering Sec1 SAST scan:", error.response?.data || error.message);
         return { status: 'FAILED', message: error.message };
     }

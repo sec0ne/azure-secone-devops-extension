@@ -123,6 +123,15 @@
             "helpMarkDown": "Provide a tag to identify this scan. If not provided, 'default' will be used"
         },
         {
+            "name": "teamId",
+            "type": "string",
+            "label": "Sec1 team id",
+            "groupName": "scanOptions",
+            "defaultValue": "",
+            "required": false,
+            "helpMarkDown": "File this scan under one of your sub-teams. Leave empty to use the API key owner's team. Copy the id from Settings > Team in Sec1. Applies to SCA and SAST scans."
+        },
+        {
             "name": "thresholdCheck",
             "type": "boolean",
             "label": "Enable the Threshold Check",
