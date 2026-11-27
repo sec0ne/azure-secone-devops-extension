@@ -35,7 +35,7 @@ Integrating the Sec1 Security plugin as Azure DevOps Extension allows developers
   - Description - It is option field but you can provide appropriate description.
   - Grant access permission to all pipelines - Select checkbox in case you want to grant the permission to all pipeline otherwise you need to grant the permission to individual pipeline during execution.
 
-  <b>Note</b> : To get `SecAPI Security API Token` navigate to [Scopy](https://scopy.sec1.io/) > "Login with GitHub" > "Settings"
+  <b>Note</b> : To get `SecAPI Security API Token` navigate to [Sec1 Portal](https://unified.sec1.io/) > "Login with GitHub" > "Settings"
   In the "API key" section, click on "Generate API key" and copy it for use.
 
 <blockquote>
@@ -77,6 +77,7 @@ You can also copy below code snippet to directly copy in pipeline yaml file.
     dastScanType: 'quick'
     asyncScan: false
     tag: 'default'
+    teamId: '<<Optional: id of the sub-team to file the scans under>>'
     thresholdCheck: true
     critical: '2'
     high: '5'
@@ -95,6 +96,7 @@ You can also copy below code snippet to directly copy in pipeline yaml file.
     * `DAST Scan Type` — Choose `Quick` (faster, lighter coverage) or `Deep` (slower, more thorough). Defaults to `Quick`.
   * `Run scans asynchronously` (<b>optional</b>) — When enabled, the SCA scan is triggered fire-and-forget: the task submits the scan, prints the report URL, and the pipeline continues without waiting for results. Defaults to off (the task waits for SCA results). This option is ignored when Threshold Check is enabled, because evaluating a threshold requires the scan results.
   * `Tag` (<b>optional</b>) — A label to identify this scan. Defaults to the branch name, or `default` if unavailable.
+  * `Sec1 team id` (<b>optional</b>) — File the SCA and SAST scans under one of your sub-teams. A scan normally belongs to the team of the user who owns the API key, so when every pipeline shares one key of the parent team, set this to the id of the sub-team the scan is for (copy it from Settings > Team in Sec1): the members of that sub-team and of the parent team see the scan, other sub-teams do not. The team must be the API key owner's own team or one of its sub-teams; otherwise the scan is refused and the task fails with the reason. Leave empty to use the API key owner's team. When the input is empty, the `SEC1_TEAM_ID` pipeline variable is used if set.
   * `Enable the Threshold Check` (<b>optional</b>) If selected, define your vulnerability threshold levels by "Severity". Leave a severity blank to ignore it. <br /> 
     
     * If you set the critical vulnerability threshold to 10, your build will fail if the scan reports 10 or more critical vulnerabilities.

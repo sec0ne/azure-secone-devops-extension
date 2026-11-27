@@ -10,7 +10,7 @@
     "version": {
         "Major": 2,
         "Minor": 2,
-        "Patch": 1
+        "Patch": 3
     },
     "instanceNameFormat": "Sec1 Security",
     "groups": [
@@ -86,6 +86,25 @@
             "helpMarkDown": "Quick scans run faster with lighter coverage. Deep scans are more thorough but take longer. Defaults to Quick."
         },
         {
+            "name": "enableApiSecurity",
+            "type": "boolean",
+            "label": "Enable API Security Scan",
+            "groupName": "scanOptions",
+            "defaultValue": false,
+            "required": true,
+            "helpMarkDown": "Check this box to enable API Security scanning. Requires an API Security Configuration ID created in the Sec1 portal."
+        },
+        {
+            "name": "apiSecurityConfigId",
+            "type": "string",
+            "label": "API Security Config ID",
+            "groupName": "scanOptions",
+            "defaultValue": "",
+            "required": false,
+            "visibleRule": "enableApiSecurity = true",
+            "helpMarkDown": "The API Security Configuration ID created in the Sec1 portal. The scan is triggered against this configuration."
+        },
+        {
             "name": "asyncScan",
             "type": "boolean",
             "label": "Run scans asynchronously",
@@ -102,6 +121,15 @@
             "defaultValue": "default",
             "required": false,
             "helpMarkDown": "Provide a tag to identify this scan. If not provided, 'default' will be used"
+        },
+        {
+            "name": "teamId",
+            "type": "string",
+            "label": "Sec1 team id",
+            "groupName": "scanOptions",
+            "defaultValue": "",
+            "required": false,
+            "helpMarkDown": "File this scan under one of your sub-teams. Leave empty to use the API key owner's team. Copy the id from Settings > Team in Sec1. Applies to SCA and SAST scans."
         },
         {
             "name": "thresholdCheck",
